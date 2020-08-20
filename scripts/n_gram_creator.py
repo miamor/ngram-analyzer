@@ -12,83 +12,110 @@ MAPPING = {
 }
 
 def main(args):
-    INPUT_DIR = args[1]
-    OUTPUT_FILE = args[2]
-    NUM_FILES = int(args[3])
-    N_GRAM_SIZE = int(args[4])
+    input_dir = args[1]
+    output_file = args[2]
+    num_files = int(args[3])
+    n_gram_size = int(args[4])
 
-    gen_ngram_from_dir(INPUT_DIR, N_GRAM_SIZE, NUM_FILES, OUTPUT_FILE)
+    gen_ngram_from_dir(input_dir, n_gram_size, num_files, output_file)
 
 
-# def gen_ngram_from_dir(INPUT_DIR, N_GRAM_SIZE, NUM_FILES, OUTPUT_FILE):
+# def gen_ngram_from_dir(input_dir, n_gram_size, num_files, output_file):
 #     count = 0
 #     file_paths = []
-#     for filename in os.listdir(INPUT_DIR):
-#         if count >= NUM_FILES:
+#     for filename in os.listdir(input_dir):
+#         if count >= num_files:
 #             break
 #         count += 1
-#         file_paths.append(INPUT_DIR + '/' + filename)
+#         file_paths.append(input_dir + '/' + filename)
 
-#     freq_arr = get_freq_arr(file_paths, N_GRAM_SIZE, NUM_FILES)
+#     freq_arr = get_freq_arr(file_paths, n_gram_size, num_files)
 
-#     df = fcn_gen_ngram(file_paths, N_GRAM_SIZE, NUM_FILES, freq_arr, OUTPUT_FILE)
+#     df = fcn_gen_ngram(file_paths, n_gram_size, num_files, freq_arr, output_file)
 
 #     # save freq_arr
-#     with open('{}/{}_freq_arr'.format(os.path.dirname(OUTPUT_FILE), OUTPUT_FILE.split('/')[-1].split('.')[0]), 'wb') as f:
+#     with open('{}/{}_freq_arr'.format(os.path.dirname(output_file), output_file.split('/')[-1].split('.')[0]), 'wb') as f:
 #         pickle.dump(freq_arr, f)
 
-def gen_ngram_from_dir(INPUT_DIR, N_GRAM_SIZE, NUM_FILES, OUTPUT_FILE):
+def gen_ngram_from_dir(input_dir, n_gram_size, num_files, output_file):
     count = 0
     file_paths = []
     lbls_dict = {}
-    for lbl in os.listdir(INPUT_DIR):
-        for filename in os.listdir(INPUT_DIR+'/'+lbl):
-            if count >= NUM_FILES:
+    freq_arr = []
+    for lbl in sorted(os.listdir(input_dir)):
+        freq_arr_tmp = []
+        for filename in os.listdir(input_dir+'/'+lbl):
+            if count >= num_files:
                 break
             count += 1
-            file_paths.append(INPUT_DIR+'/'+lbl+'/'+filename)
+            file_paths.append(input_dir+'/'+lbl+'/'+filename)
             lbls_dict[filename] = MAPPING[lbl]
 
-    freq_arr = get_freq_arr(file_paths, N_GRAM_SIZE, NUM_FILES)
+        freq_arr_tmp = get_freq_arr(file_paths, n_gram_size, num_files)
+        # freq_arr_tmp = [lbl+'_'+str(val) for val in freq_arr_tmp]
 
-    df = fcn_gen_ngram(file_paths, N_GRAM_SIZE,
-                       NUM_FILES, freq_arr, lbls_dict, OUTPUT_FILE)
-
+        freq_arr.extend(freq_arr_tmp)
+    
+    print('>> freq_arr', freq_arr)
     # save freq_arr
-    with open('{}/{}_freq_arr'.format(os.path.dirname(OUTPUT_FILE), OUTPUT_FILE.split('/')[-1].split('.')[0]), 'wb') as f:
+    with open('{}/{}_freq_arr'.format(os.path.dirname(output_file), output_file.split('/')[-1].split('.')[0]), 'wb') as f:
         pickle.dump(freq_arr, f)
 
+    df = fcn_gen_ngram(file_paths, n_gram_size, num_files, freq_arr, lbls_dict, output_file)
 
-def gen_ngram_from_files(FILE_PATHS, N_GRAM_SIZE, NUM_FILES, FREQ_FILE, OUTPUT_FILE=None):
-    with open(FREQ_FILE, 'rb') as f:
+
+def gen_ngram_from_files(file_paths, n_gram_size, num_files, freq_file, output_file=None):
+    with open(freq_file, 'rb') as f:
         freq_arr = pickle.load(f)
-    df = fcn_gen_ngram(FILE_PATHS, N_GRAM_SIZE,
-                       NUM_FILES, freq_arr, OUTPUT_FILE)
+    df = fcn_gen_ngram(file_paths, n_gram_size,
+                       num_files, freq_arr=freq_arr, output_file=output_file)
     return df
 
 
-def fcn_gen_ngram(FILE_PATHS, N_GRAM_SIZE, NUM_FILES, FREQ_AR, LABELS_DICT=None, OUTPUT_FILE=None):
-    print("Highest frequencies: {}".format(FREQ_AR))
+def fcn_gen_ngram(file_paths, n_gram_size, num_files, freq_arr, lbls_dict=None, output_file=None):
+    print("Highest frequencies: {}".format(freq_arr))
 
-    csv_dict = dict((gram, []) for gram in FREQ_AR)
+    csv_dict = dict()
+    for i, gram in enumerate(freq_arr):
+        # csv_dict[gram] = []
+        if i < 30: lbl = 'benign'
+        else: lbl = 'malware'
+        csv_dict['{}_{}'.format(lbl, str(gram))] = []
+    # csv_dict = dict((gram, []) for gram in FREQ_AR_DICT)
     csv_dict['label'] = []
 
-    for filepath in FILE_PATHS:
-        frequencies = nga.get_gram_frequencies(N_GRAM_SIZE, filepath, FREQ_AR)
+    for filepath in file_paths:
+        # print('** filepath', filepath)
+        frequencies = nga.get_gram_frequencies(n_gram_size, filepath, freq_arr)
         normalize_dict(frequencies)
-        for k in csv_dict:
-            if k != 'label':
-                if k in frequencies:
-                    csv_dict[k].append(frequencies[k])
-                else:
-                    csv_dict[k].append(0.0)
-        csv_dict['label'].append(LABELS_DICT[filepath.split('/')[-1]])
+        # print('frequencies', frequencies)
+        for i, gram in enumerate(freq_arr):
+            if i < 30: lbl = 'benign'
+            else: lbl = 'malware'
+            k = '{}_{}'.format(lbl, str(gram))
+            if gram in frequencies:
+                csv_dict[k].append(frequencies[gram])
+            else:
+                csv_dict[k].append(0.0)
+
+            # for lbl in ['benign', 'malware']:
+            #     k = '{}_{}'.format(lbl, str(gram))
+            #     if k in csv_dict:
+            #         # print('\t gram=', k)
+            #         if gram in frequencies:
+            #             csv_dict[k].append(frequencies[gram])
+            #         else:
+            #             csv_dict[k].append(0.0)
+        if lbls_dict is not None:
+            csv_dict['label'].append(lbls_dict[filepath.split('/')[-1]])
+        else: 
+            csv_dict['label'].append(-1)
     print('csv_dict', csv_dict)
     df = pd.DataFrame(csv_dict)
     print(df)
-    if OUTPUT_FILE is not None:
-        df.to_csv(OUTPUT_FILE, encoding='utf-8', index=False, header=None)
-        print('Added to file: {}'.format(OUTPUT_FILE))
+    if output_file is not None:
+        df.to_csv(output_file, encoding='utf-8', index=False, header=None)
+        print('Added to file: {}'.format(output_file))
 
     return df
 
