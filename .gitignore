@@ -1,0 +1,5 @@
+venv
+n-gram-files
+
+__pycache__
+**/**/*.pyc
