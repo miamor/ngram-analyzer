@@ -7,7 +7,9 @@ import pandas as pd
 
 class NGRAM_module:
     def __init__(self, model_path):
-        self.model_path = model_path
+        self.model_path = model_path# load clf
+        self.clf = pickle.load(open(self.model_path, 'rb'))
+
         return 
 
     def creator(self, file_paths, n_gram_size, num_files, freq_file=None, output_file=None):
@@ -16,13 +18,10 @@ class NGRAM_module:
 
 
     def infer(self, df):
-        # load clf
-        clf = pickle.load(open(self.model_path, 'rb'))
-
         # load data
         X = df.iloc[:, :-1]
         # y = df.iloc[:, -1].tolist()
-        y_pred = clf.predict(X)
+        y_pred = self.clf.predict(X)
         print(y_pred)
         return y_pred
 
