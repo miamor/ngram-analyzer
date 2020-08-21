@@ -7,7 +7,9 @@ import pandas as pd
 
 class NGRAM_module:
     def __init__(self, model_path):
-        self.model_path = model_path# load clf
+        self.model_path = model_path
+        print('Load ngram clf from '+self.model_path)
+        # load clf
         self.clf = pickle.load(open(self.model_path, 'rb'))
 
         return 
@@ -35,17 +37,19 @@ if __name__ == "__main__":
 
     #               '/media/tunguyen/TuTu_Passport/MTAAV/bin/new_a_Dung/benign/1a2ff8d363069b817fb2e421c16ccc43d4a4554ab9c3affa0b8550d66c002c2a',
     #               '/media/tunguyen/TuTu_Passport/MTAAV/bin/new_a_Dung/benign/1eba06ec93001087fdefd0c520ab665a75d295056ef36ed79285960252a59618']
-    root = '/media/tunguyen/TuTu_Passport/MTAAV/bin/none/'
+    root = '/media/tunguyen/TuTu_Passport/MTAAV/bin/none1/'
     file_paths = []
     total = 0
     for filename in os.listdir(root):
         file_paths.append(root+filename)
         total += 1
-    df = creator(file_paths=file_paths, n_gram_size=2, num_files=total,
+
+    ngram = NGRAM_module(model_path='/media/tunguyen/TuTu_Passport/MTAAV/ngram/clf_2gram')
+    df = ngram.creator(file_paths=file_paths, n_gram_size=2, num_files=total,
                  freq_file='/media/tunguyen/TuTu_Passport/MTAAV/ngram/all_2gram_freq_arr',
-                 output_file='/media/tunguyen/TuTu_Passport/MTAAV/ngram/none_2gram.csv')
+                 output_file='/media/tunguyen/TuTu_Passport/MTAAV/ngram/none1_2gram.csv')
     # df = pd.read_csv('/media/tunguyen/TuTu_Passport/MTAAV/ngram/none_2gram_test.csv', header=None)
-    infer(MODEL_PATH='/media/tunguyen/TuTu_Passport/MTAAV/ngram/clf_2gram', df=df)
+    ngram.infer(df=df)
 
     # args = sys.argv
     # INPUT_DIR = args[1]

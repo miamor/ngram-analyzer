@@ -73,7 +73,7 @@ def gen_ngram_from_files(file_paths, n_gram_size, num_files, freq_file, output_f
 
 
 def fcn_gen_ngram(file_paths, n_gram_size, num_files, freq_arr, lbls_dict=None, output_file=None):
-    print("Highest frequencies: {}".format(freq_arr))
+    # print("Highest frequencies: {}".format(freq_arr))
 
     csv_dict = dict()
     for i, gram in enumerate(freq_arr):
@@ -110,7 +110,7 @@ def fcn_gen_ngram(file_paths, n_gram_size, num_files, freq_arr, lbls_dict=None, 
             csv_dict['label'].append(lbls_dict[filepath.split('/')[-1]])
         else: 
             csv_dict['label'].append(-1)
-    print('csv_dict', csv_dict)
+    # print('csv_dict', csv_dict)
     df = pd.DataFrame(csv_dict)
     print(df)
     if output_file is not None:
