@@ -31,7 +31,7 @@ def main(args):
         X = all_df.iloc[:, :-1]
         y = all_df.iloc[:, -1].tolist()
         print('X', X.shape)
-        print('X', X)
+        # print('X', X)
         # print('y', y)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=0)
